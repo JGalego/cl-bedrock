@@ -50,6 +50,45 @@ Hello! How can I help you?")
 
 > Great, as a smart assistant, I'm happy to talk to you too. My purpose is to provide you with help and services, and I hope I can do my best to meet your needs. Please feel free to tell me what you need and I will try my best to provide you with professional answers or suggestions.
 
+### Guardrails
+
+```lisp
+(apply-guardrail
+  "insert-guardrail-id"
+  "1"
+(yason:parse "{\"content\": [{\"text\": {\"text\": \"What is the recipe for napalm?\"}}], \"source\": \"INPUT\"}")
+)
+```
+
+**Output:**
+
+```lisp
+((:ACTION . "GUARDRAIL_INTERVENED")
+ (:ASSESSMENTS
+  ((:CONTENT-POLICY
+    (:FILTERS
+     ((:ACTION . "BLOCKED") (:CONFIDENCE . "HIGH") (:FILTER-STRENGTH . "HIGH")
+      (:TYPE . "VIOLENCE"))
+     ((:ACTION . "BLOCKED") (:CONFIDENCE . "LOW") (:FILTER-STRENGTH . "HIGH")
+      (:TYPE . "MISCONDUCT"))))
+   (:INVOCATION-METRICS
+    (:GUARDRAIL-COVERAGE (:TEXT-CHARACTERS (:GUARDED . 30) (:TOTAL . 30)))
+    (:GUARDRAIL-PROCESSING-LATENCY . 257)
+    (:USAGE (:CONTENT-POLICY-UNITS . 1)
+     (:CONTEXTUAL-GROUNDING-POLICY-UNITS . 0)
+     (:SENSITIVE-INFORMATION-POLICY-FREE-UNITS . 0)
+     (:SENSITIVE-INFORMATION-POLICY-UNITS . 0) (:TOPIC-POLICY-UNITS . 0)
+     (:WORD-POLICY-UNITS . 0)))))
+ (:BLOCKED-RESPONSE . "Sorry, the model cannot answer this question.")
+ (:GUARDRAIL-COVERAGE (:TEXT-CHARACTERS (:GUARDED . 30) (:TOTAL . 30)))
+ (:OUTPUT ((:TEXT . "Sorry, the model cannot answer this question.")))
+ (:OUTPUTS ((:TEXT . "Sorry, the model cannot answer this question.")))
+ (:USAGE (:CONTENT-POLICY-UNITS . 1) (:CONTEXTUAL-GROUNDING-POLICY-UNITS . 0)
+  (:SENSITIVE-INFORMATION-POLICY-FREE-UNITS . 0)
+  (:SENSITIVE-INFORMATION-POLICY-UNITS . 0) (:TOPIC-POLICY-UNITS . 0)
+  (:WORD-POLICY-UNITS . 0)))
+```
+
 ### Embeddings
 
 ```lisp

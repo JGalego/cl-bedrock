@@ -240,9 +240,7 @@
     :endpoint-prefix "bedrock-runtime"
     :access-key (getenv "AWS_ACCESS_KEY_ID" access-key)
     :secret-key (getenv "AWS_SECRET_ACCESS_KEY" secret-key)
-    :session-token (getenv "AWS_SESSION_TOKEN" session-token)
-  )
-)
+    :session-token (getenv "AWS_SESSION_TOKEN" session-token)))
 
 (defun converse (model-id body &key (access-key nil) (secret-key nil) (session-token nil) (region nil))
   "Sends messages to a specified Amazon Bedrock model.
@@ -255,6 +253,17 @@
     :endpoint-prefix "bedrock-runtime"
     :access-key (getenv "AWS_ACCESS_KEY_ID" access-key)
     :secret-key (getenv "AWS_SECRET_ACCESS_KEY" secret-key)
-    :session-token (getenv "AWS_SESSION_TOKEN" session-token)
-  )
-)
+    :session-token (getenv "AWS_SESSION_TOKEN" session-token)))
+
+(defun apply-guardrail (guardrail-identifier guardrail-version body &key (access-key nil) (secret-key nil) (session-token nil) (region nil))
+  "Applies an Amazon Bedrock Guardrail to stop harmful content.
+  https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ApplyGuardrail.html"
+  (aws-sigv4-post
+    "bedrock"
+    (getenv "AWS_REGION" region)
+    (format nil "/guardrail/~a/version/~a/apply" guardrail-identifier guardrail-version)
+    body
+    :endpoint-prefix "bedrock-runtime"
+    :access-key (getenv "AWS_ACCESS_KEY_ID" access-key)
+    :secret-key (getenv "AWS_SECRET_ACCESS_KEY" secret-key)
+    :session-token (getenv "AWS_SESSION_TOKEN" session-token)))
