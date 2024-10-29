@@ -209,8 +209,8 @@
      (amz-time (aws-timestamp the-time))
      (base-headers `(("Accept" . ,accept)
                      ("Content-Type" . ,content-type)
-                     ("X-Amz-Date" . ,amz-time)
-                     ("X-Amz-Security-Token" . ,session-token))))
+                     ("X-Amz-Date" . ,amz-time))))
+    (if session-token (setf base-headers (cons (cons "X-Amz-Security-Token" session-token) base-headers)))
     (multiple-value-bind (result_js result-code response_js)
       (post 
         aws-url
