@@ -243,3 +243,18 @@
     :session-token (getenv "AWS_SESSION_TOKEN" session-token)
   )
 )
+
+(defun converse (model-id body &key (access-key nil) (secret-key nil) (session-token nil) (region nil))
+  "Sends messages to a specified Amazon Bedrock model.
+  https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html"
+  (aws-sigv4-post
+    "bedrock"
+    (getenv "AWS_REGION" region)
+    (format nil "/model/~a/converse" (quri:url-encode model-id))
+    body
+    :endpoint-prefix "bedrock-runtime"
+    :access-key (getenv "AWS_ACCESS_KEY_ID" access-key)
+    :secret-key (getenv "AWS_SECRET_ACCESS_KEY" secret-key)
+    :session-token (getenv "AWS_SESSION_TOKEN" session-token)
+  )
+)

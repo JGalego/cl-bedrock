@@ -4,7 +4,7 @@ A Common Lisp library for [Amazon Bedrock](https://aws.amazon.com/bedrock/).
 
 ## Examples
 
-### Text Generation
+### [Text Completion](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html)
 
 ```lisp
 (invoke-model
@@ -23,6 +23,32 @@ A Common Lisp library for [Amazon Bedrock](https://aws.amazon.com/bedrock/).
 Hello! How can I help you?")
    (:COMPLETION-REASON . "FINISH"))))
 ```
+
+### [Converse API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html)
+
+```lisp
+(converse
+  "anthropic.claude-3-haiku-20240307-v1:0"
+  (yason:parse "{\"messages\":[{\"role\":\"user\",\"content\":[{\"text\":\"嘿，你好吗\"}]}]}")
+  ;; Translation: Hey there, how are you?
+)
+```
+
+**Output:**
+
+```lisp
+((:METRICS (:LATENCY-MS . 1359))
+ (:OUTPUT
+  (:MESSAGE
+   (:CONTENT
+    ((:TEXT
+      . "很好,作为一位智能助手,我也很高兴和您交谈。我的目的就是为您提供帮助和服务,希望我能尽自己所能满足您的需求。请随时告诉我您有什么需要,我会尽力为您提供专业的回答或建议。")))
+   (:ROLE . "assistant")))
+ (:STOP-REASON . "end_turn")
+ (:USAGE (:INPUT-TOKENS . 16) (:OUTPUT-TOKENS . 94) (:TOTAL-TOKENS . 110))) 
+```
+
+> Great, as a smart assistant, I'm happy to talk to you too. My purpose is to provide you with help and services, and I hope I can do my best to meet your needs. Please feel free to tell me what you need and I will try my best to provide you with professional answers or suggestions.
 
 ### Embeddings
 
