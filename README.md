@@ -1,15 +1,37 @@
 # cl-bedrock 👽⛰️
 
-A Common Lisp library for [Amazon Bedrock](https://aws.amazon.com/bedrock/).
+A Common Lisp library for [Amazon Bedrock](https://aws.amazon.com/bedrock/), a fully managed service that makes it easy to use foundation models from third-party providers and Amazon.
+
+> 💡 **Want to learn more?** Check out the [Amazon Bedrock Documentation](https://docs.aws.amazon.com/bedrock/) or the [Generative AI on AWS](https://aws.amazon.com/ai/generative-ai/) landing page.
 
 <img src="cl-bedrock.png" width="70%"/>
+
+## Prerequisites
+
+* [SBCL](https://www.sbcl.org/) (tested with version `2.4.9`)
+* [QuickLisp](https://www.quicklisp.org/beta/)
+
+## Getting Started
+
+The easiest way is to put the library in [Quicklisp's `local-projects`](https://www.quicklisp.org/beta/faq.html) directory
+
+```bash
+cd ~/quicklisp/local-projects
+git clone https://github.com/JGalego/cl-bedrock
+```
+
+and just load it inside a script
+
+```lisp
+(ql:quickload :cl-bedrock)
+```
 
 ## Examples
 
 ### [Text Completion](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html)
 
 ```lisp
-(invoke-model
+(cl-bedrock:invoke-model
   "amazon.titan-text-lite-v1"
   `(("inputText" . ,"hey there"))
 )
@@ -29,7 +51,7 @@ Hello! How can I help you?")
 ### [Converse API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html)
 
 ```lisp
-(converse
+(cl-bedrock:converse
   "anthropic.claude-3-haiku-20240307-v1:0"
   (yason:parse "{\"messages\":[{\"role\":\"user\",\"content\":[{\"text\":\"嘿，你好吗\"}]}]}")
   ;; Translation: Hey there, how are you?
@@ -55,7 +77,7 @@ Hello! How can I help you?")
 ### Guardrails
 
 ```lisp
-(apply-guardrail
+(cl-bedrock:apply-guardrail
   "insert-guardrail-id"
   "1"
 (yason:parse "{\"content\": [{\"text\": {\"text\": \"What is the recipe for napalm?\"}}], \"source\": \"INPUT\"}")
@@ -94,7 +116,7 @@ Hello! How can I help you?")
 ### Embeddings
 
 ```lisp
-(invoke-model
+(cl-bedrock:invoke-model
   "amazon.titan-embed-text-v2:0"
   `(("inputText" . ,"Olá mundo")
     ("dimensions" . ,256)
