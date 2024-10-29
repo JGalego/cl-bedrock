@@ -11,6 +11,7 @@
                #:cl-json-helper
                #:dexador
                #:ironclad
-               #:local-time)
+               #:local-time
+			   #:quri)
   :components ((:file "package")
                (:file "cl-bedrock")))

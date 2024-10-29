@@ -35,6 +35,12 @@
   "Removes any leading or trailing whitespace."
   (string-trim '(#\Space #\Tab) s))
 
+(defun safe-url-encode (s)
+  "Encode URLs safely."
+  (format nil "~{~a~^/~}"
+    (mapcar #'quri:url-encode 
+      (uiop:split-string s :separator "/"))))
+
 ;;;
 ;;; Dates & Times
 ;;;
@@ -121,7 +127,7 @@
   "Arranges the contents of the request (host, action, headers, &c.) into a standard canonical format."
   (concatenate 'string
     http-verb *nl*
-    canonical-uri *nl* 
+    (safe-url-encode canonical-uri) *nl* 
     canonical-query-string *nl*
     canonical-headers-string *nl*
     signed-headers-string *nl*
@@ -229,20 +235,11 @@
   (aws-sigv4-post
     "bedrock"
     (getenv "AWS_REGION" region)
-    (format nil "/model/~a/invoke" model-id)
+    (format nil "/model/~a/invoke" (quri:url-encode model-id))
     body
     :endpoint-prefix "bedrock-runtime"
     :access-key (getenv "AWS_ACCESS_KEY_ID" access-key)
     :secret-key (getenv "AWS_SECRET_ACCESS_KEY" secret-key)
     :session-token (getenv "AWS_SESSION_TOKEN" session-token)
-  )
-)
-
-;; Amazon Bedrock
-;; https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html
-(print
-  (invoke-model
-    "amazon.titan-text-lite-v1"
-    `(("inputText" . ,"hey there"))
   )
 )
