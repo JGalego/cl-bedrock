@@ -83,7 +83,20 @@
   "Creates a request URL to a regional service endpoint."
   (concatenate 'string (make-aws-endpoint service-code region-code :protocol protocol) target))
 
-(defun post (url headers content)
+(defun aws-get (url headers)
+  "Sends a GET request to a specified url."
+  (handler-case
+    (multiple-value-bind (result code)
+      (dex:get url
+            :headers headers
+            :force-binary t
+            :keep-alive *dex-keep-alive*
+            :verbose *dex-verbose*)
+      (values (json-decode-octets result) code nil))
+    (dex:http-request-failed (e)
+      (values nil (dex:response-status e) (json-decode-octets (dex:response-body e))))))
+
+(defun aws-post (url headers content)
   "Sends a POST request to a specified url."
   (handler-case
     (multiple-value-bind (result code)
@@ -176,7 +189,7 @@
   "Calculates the signature by performing a keyed hash operation on the string to sign."
   (pad-hex-string (ironclad:byte-array-to-hex-string (hmac-sha256 string-to-sign signing-key))))
 
-(defun create-authorization-string (http-verb aws-host canonical-uri base-headers content the-time amz-time region service access-key secret-key)
+(defun create-authorization-string (http-verb aws-host canonical-uri base-headers content the-time amz-time region service access-key secret-key &key (canonical-query-string ""))
   "Creates the Authorization string for the request."
   (when (and access-key secret-key)
     (let* 
@@ -185,21 +198,44 @@
        (hashed-payload (hex-sha256-hash (babel:string-to-octets content :encoding :utf-8)))
        (canonical-header-string (format-canonical-header-string canonical-headers))
        (algorithm *hash-algorithm*)
-       (canonical-request (create-canonical-request http-verb canonical-uri "" canonical-header-string signed-headers-string hashed-payload))
+       (canonical-request (create-canonical-request http-verb canonical-uri canonical-query-string canonical-header-string signed-headers-string hashed-payload))
        (credential-scope (create-credential-scope the-time region service))
        (string-to-sign (create-string-to-sign algorithm amz-time credential-scope canonical-request))
        (signing-key (derive-signing-key secret-key the-time region service))
        (signature (calculate-signature string-to-sign signing-key)))
       (concatenate 'string algorithm " " "Credential=" access-key "/" credential-scope ", SignedHeaders=" signed-headers-string ", Signature=" signature))))
 
-(defun create-authorization-header (http-verb aws-host target base-headers content the-time amz-time region service access-key secret-key)
+(defun create-authorization-header (http-verb aws-host target base-headers content the-time amz-time region service access-key secret-key &key (query-string ""))
   "Creates the Authorization header for the request."
   (let 
-    ((authorization-string (create-authorization-string http-verb aws-host target base-headers content the-time amz-time region service access-key secret-key)))
+    ((authorization-string (create-authorization-string http-verb aws-host target base-headers content the-time amz-time region service access-key secret-key :canonical-query-string query-string)))
     (when authorization-string
       (list (cons "Authorization" authorization-string)))))
 
-(defun aws-sigv4-post (service region target content &key (endpoint-prefix service) (content-type "application/json") (accept "application/json")  (access-key nil) (secret-key nil) (session-token nil) (the-time (local-time:now)))
+(defun aws-sigv4-get (service region target &key (endpoint-prefix service) (content-type "application/json") (accept "application/json")  (access-key nil) (secret-key nil) (session-token nil) (the-time (local-time:now)) (query-string ""))
+  "Sends an AWS SigV4-signed GET request."
+  (assert (equal (null access-key) (null secret-key)))
+  (let* 
+    ((aws-host (make-aws-host endpoint-prefix region))
+     (aws-url (make-aws-url endpoint-prefix region :target target))
+     (amz-time (aws-timestamp the-time))
+     (base-headers `(("X-Amz-Date" . ,amz-time))))
+    (if session-token (setf base-headers (cons (cons "X-Amz-Security-Token" session-token) base-headers)))
+    (if (not (equal "" query-string)) (setf aws-url (concatenate 'string aws-url "?" query-string)))
+    (multiple-value-bind (result_js result-code response_js)
+      (aws-get 
+        aws-url
+        (append 
+          base-headers
+          (create-authorization-header
+            "GET" aws-host target base-headers "" the-time amz-time region service access-key secret-key :query-string query-string)))
+      (if (equal result-code 200)
+        (if result_js
+          (values result_js result-code response_js)
+          (values t result-code response_js))
+        (values result_js result-code response_js)))))
+
+(defun aws-sigv4-post (service region target content &key (endpoint-prefix service) (content-type "application/json") (accept "application/json")  (access-key nil) (secret-key nil) (session-token nil) (the-time (local-time:now)) (query-string ""))
   "Sends an AWS SigV4-signed POST request."
   (assert (equal (null access-key) (null secret-key)))
   (let* 
@@ -211,13 +247,14 @@
                      ("Content-Type" . ,content-type)
                      ("X-Amz-Date" . ,amz-time))))
     (if session-token (setf base-headers (cons (cons "X-Amz-Security-Token" session-token) base-headers)))
+    (if (not (equal "" query-string)) (setf aws-url (concatenate 'string aws-url "?" query-string)))
     (multiple-value-bind (result_js result-code response_js)
-      (post 
+      (aws-post 
         aws-url
         (append 
           base-headers
           (create-authorization-header
-            "POST" aws-host target base-headers content the-time amz-time region service access-key secret-key))
+            "POST" aws-host target base-headers content the-time amz-time region service access-key secret-key :query-string query-string))
         content)
       (if (equal result-code 200)
         (if result_js
@@ -267,3 +304,23 @@
     :access-key (getenv "AWS_ACCESS_KEY_ID" access-key)
     :secret-key (getenv "AWS_SECRET_ACCESS_KEY" secret-key)
     :session-token (getenv "AWS_SESSION_TOKEN" session-token)))
+
+(defun list-foundation-models (&key by-customization-type by-inference-type by-output-modality by-provider (access-key nil) (secret-key nil) (session-token nil) (region nil))
+  "Lists Amazon Bedrock foundation models that you can use.
+  https://docs.aws.amazon.com/bedrock/latest/APIReference/API_ListFoundationModels.html"
+  (let* 
+    ((query-string ()))
+    (if by-provider (setf query-string (cons (format nil "byProvider=~a" by-provider) query-string)))
+    (if by-output-modality (setf query-string (cons (format nil "byOutputModality=~a" by-output-modality) query-string)))
+    (if by-inference-type (setf query-string (cons (format nil "byInferenceType=~a" by-inference-type) query-string)))
+    (if by-customization-type (setf query-string (cons (format nil "byCustomizationType=~a" by-customization-type) query-string)))
+    (setf query-string (format nil "~{~A~^&~}" query-string))
+    (aws-sigv4-get
+        "bedrock"
+        (getenv "AWS_REGION" region)
+        "/foundation-models"
+        :query-string query-string
+        :endpoint-prefix "bedrock"
+        :access-key (getenv "AWS_ACCESS_KEY_ID" access-key)
+        :secret-key (getenv "AWS_SECRET_ACCESS_KEY" secret-key)
+        :session-token (getenv "AWS_SESSION_TOKEN" session-token))))

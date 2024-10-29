@@ -28,6 +28,32 @@ and just load it inside a script
 
 ## Examples
 
+### [List Foundation Models](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_ListFoundationModels.html)
+
+```lisp
+(cl-bedrock:list-foundation-models
+  :by-provider "amazon" 
+  :by-output-modality "IMAGE" 
+  :by-inference-type "ON_DEMAND" 
+  :by-customization-type "FINE_TUNING"
+)
+```
+
+**Output:**
+
+```lisp
+((:MODEL-SUMMARIES
+  ((:CUSTOMIZATIONS-SUPPORTED "FINE_TUNING") (:GUARDRAILS-SUPPORTED)
+   (:INFERENCE-TYPES-SUPPORTED "PROVISIONED" "ON_DEMAND")
+   (:INPUT-MODALITIES "TEXT" "IMAGE")
+   (:MODEL-ARN
+    . "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-image-generator-v2:0")
+   (:MODEL-ID . "amazon.titan-image-generator-v2:0")
+   (:MODEL-LIFECYCLE (:STATUS . "ACTIVE"))
+   (:MODEL-NAME . "Titan Image Generator G1 v2") (:OUTPUT-MODALITIES "IMAGE")
+   (:PROVIDER-NAME . "Amazon") (:RESPONSE-STREAMING-SUPPORTED))))
+```
+
 ### [Text Completion](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html)
 
 ```lisp
