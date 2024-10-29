@@ -2,6 +2,8 @@
 
 A Common Lisp library for [Amazon Bedrock](https://aws.amazon.com/bedrock/).
 
+<img src="cl-bedrock.png" width="70%"/>
+
 ## Examples
 
 ### [Text Completion](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html)
