@@ -212,7 +212,7 @@
     (when authorization-string
       (list (cons "Authorization" authorization-string)))))
 
-(defun aws-sigv4-get (service region target &key (endpoint-prefix service) (content-type "application/json") (accept "application/json")  (access-key nil) (secret-key nil) (session-token nil) (the-time (local-time:now)) (query-string ""))
+(defun aws-sigv4-get (service region target &key (endpoint-prefix service) (access-key nil) (secret-key nil) (session-token nil) (the-time (local-time:now)) (query-string ""))
   "Sends an AWS SigV4-signed GET request."
   (assert (equal (null access-key) (null secret-key)))
   (let* 
@@ -266,7 +266,7 @@
 ;;;; Amazon Bedrock ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun invoke-model (model-id body &key (content-type "application/json") (accept "application/json") (access-key nil) (secret-key nil) (session-token nil) (region nil))
+(defun invoke-model (model-id body &key (access-key nil) (secret-key nil) (session-token nil) (region nil))
   "Invokes a specified Amazon Bedrock model to run inference.
   https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html"
   (aws-sigv4-post
